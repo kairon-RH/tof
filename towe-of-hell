@@ -1,0 +1,979 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+local HttpService = game:GetService("HttpService")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local RootPart = Character:WaitForChild("HumanoidRootPart")
+
+local VALID_KEY = "kairon-script"
+local DISCORD_LINK = "https://discord.gg/zbr4VaYrhH"
+
+local Purple = Color3.fromHex("#9B59FF")
+local Pink = Color3.fromHex("#FF5CA8")
+local Cyan = Color3.fromHex("#00D4FF")
+local Green = Color3.fromHex("#00FF88")
+local Red = Color3.fromHex("#FF4040")
+local Orange = Color3.fromHex("#FF8C00")
+local White = Color3.fromHex("#FFFFFF")
+local Grey = Color3.fromHex("#83889E")
+
+local State = {
+    Fly = false,
+    Noclip = false,
+    GodMode = false,
+    BypassNoclip = false,
+    FakeHeadless = false,
+    HideAll = false,
+    ESP = false,
+    KillPartsESP = false,
+    InfiniteYield = false,
+    WalkSpeed = 16,
+    JumpPower = 50,
+    Gravity = 196.2,
+    FOV = 70,
+    FlySpeed = 50,
+    FlyConn = nil,
+    NoclipConn = nil,
+    GodConn = nil,
+    ESPFolder = nil,
+    KillESPFolder = nil,
+    FusionConn = nil,
+    FusionActive = false,
+}
+
+local function RefreshChar()
+    Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    Humanoid = Character:WaitForChild("Humanoid")
+    RootPart = Character:WaitForChild("HumanoidRootPart")
+end
+
+LocalPlayer.CharacterAdded:Connect(function(c)
+    Character = c
+    Humanoid = c:WaitForChild("Humanoid")
+    RootPart = c:WaitForChild("HumanoidRootPart")
+end)
+
+local KeySystemGui = Instance.new("ScreenGui")
+KeySystemGui.Name = "RivoKeySystem"
+KeySystemGui.ResetOnSpawn = false
+KeySystemGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+if syn and syn.protect_gui then
+    syn.protect_gui(KeySystemGui)
+    KeySystemGui.Parent = game.CoreGui
+elseif gethui then
+    KeySystemGui.Parent = gethui()
+else
+    KeySystemGui.Parent = game.CoreGui
+end
+
+local BG = Instance.new("Frame")
+BG.Size = UDim2.fromScale(1, 1)
+BG.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BG.BackgroundTransparency = 0.4
+BG.BorderSizePixel = 0
+BG.Parent = KeySystemGui
+
+local Card = Instance.new("Frame")
+Card.Size = UDim2.fromOffset(420, 300)
+Card.Position = UDim2.fromScale(0.5, 0.5)
+Card.AnchorPoint = Vector2.new(0.5, 0.5)
+Card.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
+Card.BorderSizePixel = 0
+Card.Parent = BG
+Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 12)
+
+local Stroke = Instance.new("UIStroke")
+Stroke.Color = Purple
+Stroke.Thickness = 1.5
+Stroke.Transparency = 0.3
+Stroke.Parent = Card
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 50)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 16, 35)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = Card
+Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
+
+local TopFix = Instance.new("Frame")
+TopFix.Size = UDim2.new(1, 0, 0, 12)
+TopFix.Position = UDim2.fromOffset(0, 38)
+TopFix.BackgroundColor3 = Color3.fromRGB(20, 16, 35)
+TopFix.BorderSizePixel = 0
+TopFix.Parent = TopBar
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -20, 1, 0)
+TitleLabel.Position = UDim2.fromOffset(16, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "Rivo Hub  |  Key System"
+TitleLabel.TextColor3 = White
+TitleLabel.TextSize = 18
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TopBar
+
+local GradientDecor = Instance.new("Frame")
+GradientDecor.Size = UDim2.new(0, 4, 0.7, 0)
+GradientDecor.Position = UDim2.new(0, 0, 0.15, 0)
+GradientDecor.BackgroundColor3 = Purple
+GradientDecor.BorderSizePixel = 0
+GradientDecor.Parent = TopBar
+Instance.new("UICorner", GradientDecor).CornerRadius = UDim.new(0, 4)
+
+local InfoLabel = Instance.new("TextLabel")
+InfoLabel.Size = UDim2.new(1, -32, 0, 60)
+InfoLabel.Position = UDim2.fromOffset(16, 62)
+InfoLabel.BackgroundTransparency = 1
+InfoLabel.Font = Enum.Font.Gotham
+InfoLabel.Text = "Enter your key to unlock Rivo Hub.\nDon't have a key? Join the Discord to get one."
+InfoLabel.TextColor3 = Color3.fromRGB(160, 160, 185)
+InfoLabel.TextSize = 13
+InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+InfoLabel.TextWrapped = true
+InfoLabel.Parent = Card
+
+local DiscordBtn = Instance.new("TextButton")
+DiscordBtn.Size = UDim2.new(1, -32, 0, 36)
+DiscordBtn.Position = UDim2.fromOffset(16, 128)
+DiscordBtn.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+DiscordBtn.BorderSizePixel = 0
+DiscordBtn.Font = Enum.Font.GothamBold
+DiscordBtn.Text = "Get Key"
+DiscordBtn.TextColor3 = White
+DiscordBtn.TextSize = 13
+DiscordBtn.Parent = Card
+Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0, 8)
+
+local KeyBox = Instance.new("TextBox")
+KeyBox.Size = UDim2.new(1, -32, 0, 40)
+KeyBox.Position = UDim2.fromOffset(16, 178)
+KeyBox.BackgroundColor3 = Color3.fromRGB(22, 22, 32)
+KeyBox.BorderSizePixel = 0
+KeyBox.Font = Enum.Font.Gotham
+KeyBox.PlaceholderText = "Enter key here..."
+KeyBox.PlaceholderColor3 = Color3.fromRGB(90, 90, 110)
+KeyBox.Text = ""
+KeyBox.TextColor3 = White
+KeyBox.TextSize = 14
+KeyBox.ClearTextOnFocus = false
+KeyBox.Parent = Card
+Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0, 8)
+local KeyBoxStroke = Instance.new("UIStroke")
+KeyBoxStroke.Color = Purple
+KeyBoxStroke.Thickness = 1
+KeyBoxStroke.Transparency = 0.5
+KeyBoxStroke.Parent = KeyBox
+
+local PaddingBox = Instance.new("UIPadding")
+PaddingBox.PaddingLeft = UDim.new(0, 10)
+PaddingBox.Parent = KeyBox
+
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -32, 0, 20)
+StatusLabel.Position = UDim2.fromOffset(16, 222)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.Text = ""
+StatusLabel.TextColor3 = Red
+StatusLabel.TextSize = 12
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = Card
+
+DiscordBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(DISCORD_LINK)
+        StatusLabel.TextColor3 = Green
+        StatusLabel.Text = "Discord link copied!"
+        task.delay(2, function()
+            if StatusLabel then
+                StatusLabel.Text = ""
+            end
+        end)
+    else
+        StatusLabel.TextColor3 = Red
+        StatusLabel.Text = "Clipboard not supported."
+    end
+end)
+
+local SubmitBtn = Instance.new("TextButton")
+SubmitBtn.Size = UDim2.new(1, -32, 0, 40)
+SubmitBtn.Position = UDim2.fromOffset(16, 246)
+SubmitBtn.BackgroundColor3 = Purple
+SubmitBtn.BorderSizePixel = 0
+SubmitBtn.Font = Enum.Font.GothamBold
+SubmitBtn.Text = "Unlock"
+SubmitBtn.TextColor3 = White
+SubmitBtn.TextSize = 15
+SubmitBtn.Parent = Card
+Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 8)
+
+local function LaunchMainUI()
+    KeySystemGui:Destroy()
+
+    local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+    local Window = WindUI:CreateWindow({
+        Title = "Rivo Hub",
+        Folder = "RivoHub",
+        Icon = "zap",
+        NewElements = true,
+        HideSearchBar = false,
+        OpenButton = {
+            Title = "Rivo Hub",
+            CornerRadius = UDim.new(1, 0),
+            StrokeThickness = 2,
+            Enabled = true,
+            Draggable = true,
+            OnlyMobile = false,
+            Scale = 0.5,
+            Color = ColorSequence.new(Purple, Pink),
+        },
+        Topbar = {
+            Height = 44,
+            ButtonsType = "Mac",
+        },
+    })
+
+    Window:Tag({
+        Title = "Rivo Hub",
+        Color = Color3.fromHex("#1a0a2e"),
+        Border = true,
+    })
+
+    local MovSection = Window:Section({ Title = "Movement" })
+    local ItemSection = Window:Section({ Title = "Items" })
+    local TeleSection = Window:Section({ Title = "Teleport" })
+    local MiscSection = Window:Section({ Title = "Misc" })
+    local VisualSection = Window:Section({ Title = "Visuals" })
+    local OPSection = Window:Section({ Title = "OP" })
+
+    do
+        local MovTab = MovSection:Tab({
+            Title = "Movement",
+            Icon = "wind",
+            IconColor = Cyan,
+            IconShape = "Square",
+            Border = true,
+        })
+
+        MovTab:Toggle({
+            Title = "Fly",
+            Desc = "Glitched fly mode — hold Space/Shift to control altitude",
+            Value = false,
+            Callback = function(v)
+                State.Fly = v
+                if v then
+                    local flyBodyVel = Instance.new("BodyVelocity")
+                    flyBodyVel.Velocity = Vector3.zero
+                    flyBodyVel.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                    flyBodyVel.Parent = RootPart
+
+                    local flyBodyGyro = Instance.new("BodyGyro")
+                    flyBodyGyro.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+                    flyBodyGyro.D = 100
+                    flyBodyGyro.Parent = RootPart
+
+                    Humanoid.PlatformStand = true
+
+                    State.FlyConn = RunService.RenderStepped:Connect(function()
+                        if not State.Fly then return end
+                        local cam = Workspace.CurrentCamera
+                        local dir = Vector3.zero
+                        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0, 1, 0) end
+                        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then dir = dir - Vector3.new(0, 1, 0) end
+                        flyBodyVel.Velocity = dir * State.FlySpeed
+                        flyBodyGyro.CFrame = cam.CFrame
+                    end)
+                else
+                    if State.FlyConn then State.FlyConn:Disconnect() State.FlyConn = nil end
+                    for _, v2 in ipairs(RootPart:GetChildren()) do
+                        if v2:IsA("BodyVelocity") or v2:IsA("BodyGyro") then v2:Destroy() end
+                    end
+                    Humanoid.PlatformStand = false
+                end
+            end,
+        })
+
+        MovTab:Space()
+
+        MovTab:Slider({
+            Title = "Fly Speed",
+            Value = { Min = 10, Max = 300, Default = 50 },
+            Step = 5,
+            IsTooltip = true,
+            Callback = function(v)
+                State.FlySpeed = v
+            end,
+        })
+
+        MovTab:Space()
+
+        MovTab:Toggle({
+            Title = "Noclip",
+            Desc = "Phase through parts",
+            Value = false,
+            Callback = function(v)
+                State.Noclip = v
+                if v then
+                    State.NoclipConn = RunService.Stepped:Connect(function()
+                        if not State.Noclip then return end
+                        for _, part in ipairs(Character:GetDescendants()) do
+                            if part:IsA("BasePart") and part.CanCollide then
+                                part.CanCollide = false
+                            end
+                        end
+                    end)
+                else
+                    if State.NoclipConn then State.NoclipConn:Disconnect() State.NoclipConn = nil end
+                    for _, part in ipairs(Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = true
+                        end
+                    end
+                end
+            end,
+        })
+
+        MovTab:Space()
+
+        MovTab:Slider({
+            Title = "Walk Speed",
+            Value = { Min = 16, Max = 500, Default = 16 },
+            Step = 1,
+            IsTooltip = true,
+            Callback = function(v)
+                State.WalkSpeed = v
+                if Humanoid then Humanoid.WalkSpeed = v end
+            end,
+        })
+
+        MovTab:Space()
+
+        MovTab:Slider({
+            Title = "Jump Power",
+            Value = { Min = 50, Max = 500, Default = 50 },
+            Step = 5,
+            IsTooltip = true,
+            Callback = function(v)
+                State.JumpPower = v
+                if Humanoid then Humanoid.JumpPower = v end
+            end,
+        })
+
+        MovTab:Space()
+
+        MovTab:Slider({
+            Title = "Gravity",
+            Desc = "Default: 196.2",
+            Value = { Min = 0, Max = 500, Default = 196 },
+            Step = 1,
+            IsTooltip = true,
+            Callback = function(v)
+                State.Gravity = v
+                Workspace.Gravity = v
+            end,
+        })
+
+        MovTab:Space()
+
+        MovTab:Toggle({
+            Title = "Fusion",
+            Desc = "Rapidly jitter position to clip through parts",
+            Value = false,
+            Callback = function(v)
+                State.FusionActive = v
+                if v then
+                    State.FusionConn = RunService.Heartbeat:Connect(function()
+                        if not State.FusionActive then return end
+                        RootPart.CFrame = RootPart.CFrame * CFrame.new(0, 0.1, 0)
+                        task.wait()
+                        RootPart.CFrame = RootPart.CFrame * CFrame.new(0, -0.1, 0)
+                    end)
+                else
+                    if State.FusionConn then State.FusionConn:Disconnect() State.FusionConn = nil end
+                end
+            end,
+        })
+    end
+
+    do
+        local ItemsTab = ItemSection:Tab({
+            Title = "Items",
+            Icon = "package",
+            IconColor = Orange,
+            IconShape = "Square",
+            Border = true,
+        })
+
+        local function GetTool(toolName)
+            local backpack = LocalPlayer:FindFirstChild("Backpack")
+            if not backpack then return nil end
+            for _, v in ipairs(backpack:GetChildren()) do
+                if v.Name:lower():find(toolName:lower()) then return v end
+            end
+            for _, v in ipairs(Character:GetChildren()) do
+                if v:IsA("Tool") and v.Name:lower():find(toolName:lower()) then return v end
+            end
+            return nil
+        end
+
+        local function EquipTool(tool)
+            if tool then
+                local hum = Humanoid
+                if hum then hum:EquipTool(tool) end
+            end
+        end
+
+        local function UseTool()
+            local equipped = Character:FindFirstChildWhichIsA("Tool")
+            if equipped then
+                local event = equipped:FindFirstChild("RemoteEvent") or equipped:FindFirstChild("RemoteFunction")
+                if event then
+                    if event:IsA("RemoteEvent") then
+                        event:FireServer()
+                    end
+                end
+                local activate = equipped:FindFirstChild("Activate")
+                if activate then activate:Fire() end
+                if equipped.Activated then
+                    equipped.Activated:Fire()
+                end
+            end
+        end
+
+        ItemsTab:Button({
+            Title = "Trowel",
+            Desc = "Equip and use Trowel",
+            Icon = "hammer",
+            Color = Orange,
+            Justify = "Center",
+            Callback = function()
+                local tool = GetTool("Trowel")
+                if tool then
+                    EquipTool(tool)
+                    task.wait(0.2)
+                    UseTool()
+                else
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Trowel not found in backpack.", Duration = 3 })
+                end
+            end,
+        })
+
+        ItemsTab:Space()
+
+        ItemsTab:Button({
+            Title = "Hook",
+            Desc = "Equip and use Hook",
+            Icon = "anchor",
+            Color = Cyan,
+            Justify = "Center",
+            Callback = function()
+                local tool = GetTool("Hook")
+                if tool then
+                    EquipTool(tool)
+                    task.wait(0.2)
+                    UseTool()
+                else
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Hook not found in backpack.", Duration = 3 })
+                end
+            end,
+        })
+
+        ItemsTab:Space()
+
+        ItemsTab:Button({
+            Title = "Hourglass",
+            Desc = "Equip and use Hourglass",
+            Icon = "clock",
+            Color = Purple,
+            Justify = "Center",
+            Callback = function()
+                local tool = GetTool("Hourglass")
+                if tool then
+                    EquipTool(tool)
+                    task.wait(0.2)
+                    UseTool()
+                else
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Hourglass not found in backpack.", Duration = 3 })
+                end
+            end,
+        })
+    end
+
+    do
+        local TeleTab = TeleSection:Tab({
+            Title = "Teleport",
+            Icon = "map-pin",
+            IconColor = Pink,
+            IconShape = "Square",
+            Border = true,
+        })
+
+        local playerNames = {}
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                table.insert(playerNames, p.Name)
+            end
+        end
+
+        local playerDropdown = TeleTab:Dropdown({
+            Title = "Select Player",
+            Values = playerNames,
+            Value = playerNames[1],
+            AllowNone = true,
+            Callback = function() end,
+        })
+
+        TeleTab:Space()
+
+        TeleTab:Button({
+            Title = "Teleport to Player",
+            Icon = "user",
+            Color = Cyan,
+            Justify = "Center",
+            Callback = function()
+                local sel = playerDropdown.Value
+                if not sel then
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Select a player first.", Duration = 3 })
+                    return
+                end
+                local target = Players:FindFirstChild(sel)
+                if target and target.Character then
+                    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+                    if targetRoot then
+                        RootPart.CFrame = targetRoot.CFrame + Vector3.new(0, 3, 0)
+                    end
+                end
+            end,
+        })
+
+        TeleTab:Space()
+
+        TeleTab:Button({
+            Title = "Teleport to End",
+            Desc = "Requires Fly to be active — may have bugs",
+            Icon = "flag",
+            Color = Green,
+            Justify = "Center",
+            Callback = function()
+                if not State.Fly then
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Enable Fly first for best results.", Duration = 4 })
+                end
+                local map = Workspace:FindFirstChild("Map") or Workspace:FindFirstChild("Tower") or Workspace:FindFirstChild("Towers")
+                if map then
+                    local highest = nil
+                    local highestY = -math.huge
+                    for _, part in ipairs(map:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            if part.Position.Y > highestY then
+                                highestY = part.Position.Y
+                                highest = part
+                            end
+                        end
+                    end
+                    if highest then
+                        RootPart.CFrame = highest.CFrame + Vector3.new(0, 5, 0)
+                        WindUI:Notify({ Title = "Rivo Hub", Content = "Teleported to end of tower.", Duration = 3 })
+                    else
+                        WindUI:Notify({ Title = "Rivo Hub", Content = "Could not find tower end.", Duration = 3 })
+                    end
+                else
+                    local highest = nil
+                    local highestY = -math.huge
+                    for _, part in ipairs(Workspace:GetDescendants()) do
+                        if part:IsA("BasePart") and not part:IsDescendantOf(Character) then
+                            if part.Position.Y > highestY then
+                                highestY = part.Position.Y
+                                highest = part
+                            end
+                        end
+                    end
+                    if highest then
+                        RootPart.CFrame = CFrame.new(highest.Position + Vector3.new(0, 5, 0))
+                        WindUI:Notify({ Title = "Rivo Hub", Content = "Teleported to highest point.", Duration = 3 })
+                    end
+                end
+            end,
+        })
+
+        TeleTab:Space()
+
+        TeleTab:Button({
+            Title = "Teleport to Lobby",
+            Desc = "Not working inside The Tower",
+            Icon = "home",
+            Color = Orange,
+            Justify = "Center",
+            Callback = function()
+                local lobby = Workspace:FindFirstChild("Lobby")
+                if lobby then
+                    local spawnPart = lobby:FindFirstChildWhichIsA("BasePart")
+                    if spawnPart then
+                        RootPart.CFrame = spawnPart.CFrame + Vector3.new(0, 3, 0)
+                        WindUI:Notify({ Title = "Rivo Hub", Content = "Teleported to lobby.", Duration = 3 })
+                        return
+                    end
+                end
+                local spawn = Workspace:FindFirstChild("SpawnLocation")
+                if spawn then
+                    RootPart.CFrame = spawn.CFrame + Vector3.new(0, 3, 0)
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Teleported to spawn.", Duration = 3 })
+                else
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Lobby not found — may not work in The Tower.", Duration = 4 })
+                end
+            end,
+        })
+    end
+
+    do
+        local MiscTab = MiscSection:Tab({
+            Title = "Misc",
+            Icon = "settings",
+            IconColor = Grey,
+            IconShape = "Square",
+            Border = true,
+        })
+
+        MiscTab:Toggle({
+            Title = "Fake Headless",
+            Desc = "Hides your head locally",
+            Value = false,
+            Callback = function(v)
+                State.FakeHeadless = v
+                local head = Character:FindFirstChild("Head")
+                if head then
+                    for _, part in ipairs(head:GetChildren()) do
+                        if part:IsA("SpecialMesh") or part:IsA("Decal") then
+                            part.Transparency = v and 1 or 0
+                        end
+                    end
+                    head.Transparency = v and 1 or 0
+                end
+                local headlessHandle = Character:FindFirstChild("Headless Head")
+                if headlessHandle then headlessHandle.Transparency = v and 1 or 0 end
+            end,
+        })
+
+        MiscTab:Space()
+
+        MiscTab:Dropdown({
+            Title = "FOV",
+            Values = { "60", "70", "90", "120" },
+            Value = "70",
+            Callback = function(v)
+                local fovVal = tonumber(v)
+                if fovVal then
+                    State.FOV = fovVal
+                    Workspace.CurrentCamera.FieldOfView = fovVal
+                end
+            end,
+        })
+
+        MiscTab:Space()
+
+        MiscTab:Toggle({
+            Title = "Infinite Yield",
+            Desc = "Loads the Infinite Yield admin script",
+            Value = false,
+            Callback = function(v)
+                State.InfiniteYield = v
+                if v then
+                    pcall(function()
+                        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+                    end)
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Infinite Yield loaded.", Duration = 3 })
+                end
+            end,
+        })
+
+        MiscTab:Space()
+
+        local LevelInput = MiscTab:Input({
+            Title = "Set Leaderboard Level",
+            Desc = "Enter a number to set your displayed level",
+            Placeholder = "Enter level...",
+            Callback = function(v)
+                local num = tonumber(v)
+                if not num then return end
+                local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
+                if leaderstats then
+                    local level = leaderstats:FindFirstChild("Level") or leaderstats:FindFirstChild("Wins") or leaderstats:FindFirstChild("Stage")
+                    if level then
+                        level.Value = num
+                        WindUI:Notify({ Title = "Rivo Hub", Content = "Level set to " .. num, Duration = 3 })
+                    else
+                        WindUI:Notify({ Title = "Rivo Hub", Content = "Could not find level stat.", Duration = 3 })
+                    end
+                end
+            end,
+        })
+    end
+
+    do
+        local VisualTab = VisualSection:Tab({
+            Title = "Visuals",
+            Icon = "eye",
+            IconColor = Purple,
+            IconShape = "Square",
+            Border = true,
+        })
+
+        local function ClearESP()
+            if State.ESPFolder then
+                State.ESPFolder:Destroy()
+                State.ESPFolder = nil
+            end
+        end
+
+        local function BuildESP()
+            ClearESP()
+            State.ESPFolder = Instance.new("Folder")
+            State.ESPFolder.Name = "RivoESP"
+            State.ESPFolder.Parent = Workspace
+
+            local function MakeESPForPlayer(player)
+                if player == LocalPlayer then return end
+                local function UpdateESP()
+                    if not State.ESP then return end
+                    local char = player.Character
+                    if not char then return end
+                    local root = char:FindFirstChild("HumanoidRootPart")
+                    if not root then return end
+
+                    local existing = State.ESPFolder:FindFirstChild(player.Name)
+                    if existing then existing:Destroy() end
+
+                    local billboard = Instance.new("BillboardGui")
+                    billboard.Name = player.Name
+                    billboard.Size = UDim2.fromOffset(80, 20)
+                    billboard.StudsOffset = Vector3.new(0, 3, 0)
+                    billboard.AlwaysOnTop = true
+                    billboard.Adornee = root
+                    billboard.Parent = State.ESPFolder
+
+                    local nameLabel = Instance.new("TextLabel")
+                    nameLabel.Size = UDim2.fromScale(1, 1)
+                    nameLabel.BackgroundTransparency = 1
+                    nameLabel.Font = Enum.Font.GothamBold
+                    nameLabel.Text = player.Name
+                    nameLabel.TextColor3 = Purple
+                    nameLabel.TextStrokeTransparency = 0
+                    nameLabel.TextSize = 13
+                    nameLabel.Parent = billboard
+
+                    local box = Instance.new("SelectionBox")
+                    box.Name = player.Name .. "_Box"
+                    box.Color3 = Purple
+                    box.LineThickness = 0.04
+                    box.SurfaceTransparency = 0.8
+                    box.SurfaceColor3 = Color3.fromRGB(120, 80, 255)
+                    box.Adornee = root
+                    box.Parent = State.ESPFolder
+                end
+
+                player.CharacterAdded:Connect(function()
+                    task.wait(0.5)
+                    UpdateESP()
+                end)
+                UpdateESP()
+            end
+
+            for _, p in ipairs(Players:GetPlayers()) do
+                MakeESPForPlayer(p)
+            end
+
+            Players.PlayerAdded:Connect(MakeESPForPlayer)
+        end
+
+        VisualTab:Toggle({
+            Title = "ESP",
+            Desc = "Show player boxes and names through walls",
+            Value = false,
+            Callback = function(v)
+                State.ESP = v
+                if v then
+                    BuildESP()
+                else
+                    ClearESP()
+                end
+            end,
+        })
+
+        VisualTab:Space()
+
+        VisualTab:Toggle({
+            Title = "Kill Parts ESP",
+            Desc = "Highlights kill bricks in red",
+            Value = false,
+            Callback = function(v)
+                State.KillPartsESP = v
+                if v then
+                    if State.KillESPFolder then State.KillESPFolder:Destroy() end
+                    State.KillESPFolder = Instance.new("Folder")
+                    State.KillESPFolder.Name = "KillESP"
+                    State.KillESPFolder.Parent = Workspace
+
+                    local function TagKillParts(parent)
+                        for _, obj in ipairs(parent:GetDescendants()) do
+                            if obj:IsA("BasePart") then
+                                local isKill = obj.Name:lower():find("kill")
+                                    or obj.Name:lower():find("lava")
+                                    or obj.Name:lower():find("death")
+                                    or obj.Name:lower():find("acid")
+                                    or obj.Name:lower():find("spike")
+                                if isKill then
+                                    local box = Instance.new("SelectionBox")
+                                    box.Color3 = Red
+                                    box.LineThickness = 0.05
+                                    box.SurfaceTransparency = 0.6
+                                    box.SurfaceColor3 = Color3.fromRGB(255, 50, 50)
+                                    box.Adornee = obj
+                                    box.Parent = State.KillESPFolder
+                                end
+                            end
+                        end
+                    end
+
+                    TagKillParts(Workspace)
+                    WindUI:Notify({ Title = "Rivo Hub", Content = "Kill parts highlighted.", Duration = 3 })
+                else
+                    if State.KillESPFolder then
+                        State.KillESPFolder:Destroy()
+                        State.KillESPFolder = nil
+                    end
+                end
+            end,
+        })
+
+        VisualTab:Space()
+
+        VisualTab:Toggle({
+            Title = "Hide All",
+            Desc = "Hides all parts in workspace locally",
+            Value = false,
+            Callback = function(v)
+                State.HideAll = v
+                for _, part in ipairs(Workspace:GetDescendants()) do
+                    if part:IsA("BasePart") and not part:IsDescendantOf(Character) then
+                        part.LocalTransparencyModifier = v and 1 or 0
+                    end
+                end
+            end,
+        })
+    end
+
+    do
+        local OPTab = OPSection:Tab({
+            Title = "OP",
+            Icon = "shield",
+            IconColor = Red,
+            IconShape = "Square",
+            Border = true,
+        })
+
+        OPTab:Toggle({
+            Title = "Bypass Noclip",
+            Desc = "Aggressive noclip — zero CanCollide on all character parts every frame",
+            Value = false,
+            Callback = function(v)
+                State.BypassNoclip = v
+                if v then
+                    State.NoclipConn = RunService.Stepped:Connect(function()
+                        if not State.BypassNoclip then return end
+                        for _, part in ipairs(Character:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false
+                            end
+                        end
+                    end)
+                else
+                    if State.NoclipConn then State.NoclipConn:Disconnect() State.NoclipConn = nil end
+                    for _, part in ipairs(Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = true
+                        end
+                    end
+                end
+            end,
+        })
+
+        OPTab:Space()
+
+        OPTab:Toggle({
+            Title = "God Mode",
+            Desc = "Constantly resets health to max — does not bypass server kill parts",
+            Value = false,
+            Callback = function(v)
+                State.GodMode = v
+                if v then
+                    State.GodConn = RunService.Heartbeat:Connect(function()
+                        if not State.GodMode then return end
+                        if Humanoid and Humanoid.Health < Humanoid.MaxHealth then
+                            Humanoid.Health = Humanoid.MaxHealth
+                        end
+                    end)
+
+                    Humanoid.Died:Connect(function()
+                        if State.GodMode then
+                            task.wait(0.1)
+                            pcall(function()
+                                Humanoid.Health = Humanoid.MaxHealth
+                            end)
+                        end
+                    end)
+                else
+                    if State.GodConn then State.GodConn:Disconnect() State.GodConn = nil end
+                end
+            end,
+        })
+    end
+
+    WindUI:Notify({
+        Title = "Rivo Hub",
+        Content = "Loaded successfully. Welcome.",
+        Icon = "zap",
+        Duration = 5,
+    })
+end
+
+local function CheckKey()
+    local entered = KeyBox.Text
+    if entered == VALID_KEY then
+        StatusLabel.TextColor3 = Green
+        StatusLabel.Text = "Key valid. Loading..."
+        task.wait(0.8)
+        LaunchMainUI()
+    else
+        StatusLabel.TextColor3 = Red
+        StatusLabel.Text = "Invalid key."
+        TweenService:Create(Card, TweenInfo.new(0.05, Enum.EasingStyle.Bounce), {
+            Position = UDim2.new(0.5, -6, 0.5, 0),
+        }):Play()
+        task.wait(0.05)
+        TweenService:Create(Card, TweenInfo.new(0.05, Enum.EasingStyle.Bounce), {
+            Position = UDim2.new(0.5, 6, 0.5, 0),
+        }):Play()
+        task.wait(0.05)
+        TweenService:Create(Card, TweenInfo.new(0.08, Enum.EasingStyle.Bounce), {
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+        }):Play()
+    end
+end
+
+SubmitBtn.MouseButton1Click:Connect(CheckKey)
+
+KeyBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        CheckKey()
+    end
+end)
